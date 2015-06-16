@@ -1,0 +1,16 @@
+.scrollComponent {
+
+  $height: 600px;
+
+  width: 100%;
+  height: $height;
+
+  overflow: auto;
+
+  position: relative;
+
+  .consoleComponent {
+    min-height: $height;
+  }
+
+}

@@ -1,0 +1,19 @@
+#!/bin/bash
+
+run () {
+  echo " * Running service"
+  coffee ./app.coffee
+}
+
+
+
+case "$1" in
+
+  run)
+    run
+    ;;
+
+  bash)
+    /bin/bash
+    ;;
+esac

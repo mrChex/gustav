@@ -1,0 +1,44 @@
+{
+  "name": "gustav",
+  "version": "0.1.0",
+  "author": "Ruslan Cheshko",
+  "description": "",
+  "main": "app.coffee",
+  "scripts": {
+    "start": "coffee ./app.coffee",
+    "build": "node ./node_modules/webpack/bin/webpack.js --progress --profile --colors"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ukrainian.solutions/gustav.git"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "babel-core": ">=4.7.16",
+    "babel-loader": ">=4.2.0",
+    "bootstrap-sass": "^3.3.4",
+    "bootstrap-sass-loader": "^1.0.4",
+    "bower-webpack-plugin": ">=0.1.8",
+    "classnames": "^2.1.2",
+    "css-loader": ">=0.14.4",
+    "dockerode": ">=2.1.4",
+    "express": ">=4.12.4",
+    "extract-text-webpack-plugin": "^0.8.1",
+    "file-loader": ">=0.8.4",
+    "jquery": "^2.1.4",
+    "jsx-loader": ">=0.12.2",
+    "ncp": "^2.0.0",
+    "react": "^0.13.3",
+    "react-router": "^0.13.3",
+    "socket.io": ">=1.3.5",
+    "socket.io-client": "^1.3.5",
+    "style": ">=0.0.3",
+    "tar-fs": ">=1.5.1",
+    "url": ">=0.10.3",
+    "url-loader": ">=0.5.6",
+    "webpack": ">=1.7.3",
+    "webpack-dev-middleware": ">=1.0.11",
+    "webpack-dev-server": ">=1.7.0"
+  }
+
+}
