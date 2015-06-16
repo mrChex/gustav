@@ -203,7 +203,7 @@ io.on 'connection', (socket)->
       # clonecmd = "ssh-agent bash -c 'ssh-add keys/id_rsa; " +
       clonecmd = "" +
                  "git clone #{project_git} #{project_dir}/source " +
-                      "--branch #{data['branch']}'"
+                      "--branch #{data['branch']}"
 
       console.log 'CLONE CMD: ', clonecmd
 

@@ -45,12 +45,12 @@ RUN dpkg-reconfigure locales
 RUN echo "export LC_ALL=en_US.utf8" >> /root/.bashrc
 RUN echo "export LANG=en_US.utf8" >> /root/.bashrc
 
+RUN echo "YO"
 ADD src /root/gustav
 WORKDIR /root/gustav
 RUN ln -s /usr/lib/node_modules node_modules
 RUN npm run build
 
-RUN echo "YO"
 ADD entrypoint /entrypoint
 RUN chmod +x /entrypoint
 
