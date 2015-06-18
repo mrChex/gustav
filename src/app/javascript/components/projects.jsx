@@ -46,11 +46,18 @@ export default React.createClass({
   },
 
   projectsNotLoaded(err) {
-    console.err(err);
-    alert("Error in loading projects")
+    console.error(err);
+    this.setState({"error": err})
   },
 
   render() {
+
+    if(this.state.error == "ProjectsVolumeNotMounted") {
+      return <div>
+        <h2>Projects volume not mounted</h2>
+        <i>Patch /home/gustav/src/projects not found</i>
+      </div>
+    }
 
     let loaderCls = classNames({
       hidden: this.state.loaded

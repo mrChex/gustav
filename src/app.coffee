@@ -34,27 +34,70 @@ io.on 'connection', (socket)->
     console.log(data)
 
   socket.on 'projects', (fn)->
+    if not fs.existsSync("projects")
+      return fn "ProjectsVolumeNotMounted", null
+
+    tasks = {}
     projects = config.projects.slice().map (project)->
       if project.hidden then return project
+
+      tasks[project['name']] = project.containers.map (container)->
+        return container.name
 
       branches = []
       if not fs.existsSync("projects/#{project['name']}")
         fs.mkdirSync("projects/#{project['name']}")
 
       for branch_name in fs.readdirSync("./projects/#{project['name']}")
-        if branch_name == "defaults" then continue
+        if branch_name == "defaults" or branch_name[0] == "."
+          continue
         branch = {name: branch_name}
         branch_inside = fs.readdirSync("./projects/#{project['name']}/#{branch_name}")
-        if 'docker_image_id' in branch_inside
-          branch['docker_image_id'] = fs.readFileSync("./projects/#{project['name']}/#{branch_name}/docker_image_id").toString()
-        else
-          branch['docker_image_id'] = null
+
         branches.push branch
 
       project['branches'] = branches
       return project
 
-    return fn null, projects
+    do_response =->
+      return fn null, projects
+
+
+    add_docker_info_project = (i)->
+      console.log('add docker', i)
+      continue_project =-> add_docker_info_project(i+1)
+
+      project = projects[i]
+      if not project then return do_response()
+
+      branches = project['branches']
+      add_to_branch = (bi)->
+        console.log("add branch", bi)
+        continue_branch =-> add_to_branch(bi+1)
+        branch = branches[bi]
+        if not branch then return continue_project()
+        image = docker.getImage "#{config['namespace']}/#{project.name}:#{branch.name}"
+        image.inspect (err, inspect)->
+          console.log('image getted', err)
+          branch['image'] = inspect
+          branch_containers = tasks[project.name].map (task)->
+            return "#{project.name}.#{branch.name}.#{task}"
+          branch['containers'] = []
+          add_container = ->
+            container = branch_containers.shift()
+            if not container then return continue_branch()
+            console.log('add container', container)
+            docker.getContainer(container).inspect (err, inspect)->
+              if err
+                branch['containers'].push {error: err, task:container}
+              else
+                branch['containers'].push {inspect: inspect, task: container}
+              add_container()
+          add_container()
+
+      add_to_branch(0)
+
+    add_docker_info_project(0)
 
   socket.on 'project', (project, fn)->
     project_config = config.get_project(project)
@@ -171,7 +214,8 @@ io.on 'connection', (socket)->
         container['name'] = "#{data['project']}.#{data['branch']}.#{container['name']}"
 
         if container['Binds']
-          __cwd = process.cwd() + '/' + project_dir
+          __cwd = config.cwd + '/' + project_dir
+
           container['Binds'] = container['Binds'].map (bind)-> __cwd + '/' + bind
 
         console.log ' * creating_container'

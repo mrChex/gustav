@@ -2,6 +2,10 @@ import React from 'react';
 import Scroll from './scroll';
 
 
+let hashCode = function(s) {
+  return s.split("").reduce(function(a,b){a=((a<<5)-a)+b.charCodeAt(0);return a&a},0);
+}
+
 let Time = React.createClass({
   render() {
     let date = new Date(this.props.stamp);
@@ -40,7 +44,7 @@ export default React.createClass({
         <div className="consoleComponent">
           {this.props.stdout.map( (line) => {
 
-            if(line['stream-end'] == true) { return (<b>process ended!</b>) }
+            if(line['stream-end'] == true) { return (<b key="END">process ended!</b>) }
 
             let _line = null;
             if(line['stream']) {
@@ -51,9 +55,7 @@ export default React.createClass({
               _line = <span style={{color:'yellow'}}>{line}</span>
             }
 
-            return (
-              <div>{_line}</div>
-            )
+            return <div>{_line}</div>
           })}
 
         </div>

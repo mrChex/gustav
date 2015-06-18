@@ -73,5 +73,9 @@ socket.on('docker-out', (project, _branch, _task, data) => {
 
 });
 
+socket.on('error', (err) => {
+  console.log('error handling?');
+});
+
 
 export { socket, observer };

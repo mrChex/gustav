@@ -36,20 +36,6 @@ export default React.createClass({
     });
   },
 
-  createTestContainer() {
-    let opts = {
-      "Image": "buildautomated-favbet/server:master-future",
-      "Cmd": "runserver",
-      "Entrypoint": "/bin/bash",
-      "ExtraHosts": ["main-host:192.168.59.3", "redis-host:192.168.59.3", "mysql-host:192.168.59.3"],
-      "PublishAllPorts": true
-    };
-
-    socket.emit('container create', opts, (err, container_id) => {
-      console.log("CREATED!", err, container_id)
-    });
-  },
-
   render() {
 
     if(!this.state.project) {return(

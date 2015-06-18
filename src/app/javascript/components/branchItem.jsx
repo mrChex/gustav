@@ -30,7 +30,25 @@ export default React.createClass({
 
     return (
       <li className={li_classNames} onClick={this.selectBranch}>
-        {this.props.branch.name} - {this.props.branch.docker_image_id}
+        <b>{this.props.branch.name}</b>
+        {this.props.branch.containers.map((container)=> {
+          let style = null;
+
+          if(container['error']) { style="danger" }
+          else if(container['inspect']['State']['Running']) { style="success" }
+          else if(container['inspect']['State']['error']) { style="warning" }
+          else {style = "default" }
+
+          let spanCls = classNames({
+            "label": true,
+            "label-danger": style == "danger",
+            "label-success": style == "success",
+            "label-warning": style == "warning",
+            "label-default": style == "default",
+          });
+
+          return <span className={spanCls} style={{"margin-left":5}}>{container.task.split('.')[2]}</span>
+        })}
       </li>
     )
 

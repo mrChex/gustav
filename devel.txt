@@ -1,0 +1,1 @@
+docker run -t -i --name gustavd-devel -p 3000:3000 -v `pwd`/projects:/root/gustav/projects -v /Users/chex/.boot2docker/certs/boot2docker-vm:/boot2docker -v /Users/chex/ukrainian.solutions/gustav/src/app:/root/gustav/app -v `pwd`/config:/root/gustav/config gustavd

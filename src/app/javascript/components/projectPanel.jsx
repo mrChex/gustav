@@ -60,6 +60,8 @@ export default React.createClass({
                      task: '_build'});
 
                 });
+
+    return false;
   },
 
   render() {

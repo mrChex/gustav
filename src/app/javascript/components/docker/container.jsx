@@ -85,6 +85,13 @@ export default React.createClass({
 
     let Id = container.Id.slice(0,12);
 
+    let Names = null;
+    if(container.Names) {
+      Names = container.Names.map((name)=>{
+        return <span key={name}>{name} </span>
+      });
+    }
+
     return (<tr>
 
       <td>
@@ -98,7 +105,7 @@ export default React.createClass({
       </td>
       <td>{Id}</td>
       <td>{container.Image.slice(0,30)}</td>
-      <td>{container.Names.map((name)=>{return(<span key={name}>{name} </span>)})}</td>
+      <td>{Names}</td>
       <td>{container.Status}</td>
       <td>{container.Command}</td>
       <td>{container.Ports.map((port)=>{
