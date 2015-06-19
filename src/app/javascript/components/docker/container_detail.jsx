@@ -27,13 +27,17 @@ export default React.createClass({
 
     return {"name": name,
             "tab": tab,
-            "container": null}
+            "container": null,
+            "error": null}
   },
 
   componentDidMount() {
     socket.emit('container inspect', this.state.name, (err, container) => {
-      console.log('container', container);
-      this.setState({container: container})
+      if(err) {
+        this.setState({error: err})
+      } else {
+        this.setState({container: container})
+      }
     });
   },
 
@@ -81,6 +85,11 @@ export default React.createClass({
   },
 
   render() {
+
+    if(this.state.error) { console.log(this.state.error); return(<div className="alert alert-danger" role="alert" style={{marginTop: 15}}>
+      <b>Error {this.state.error.statusCode}!</b> {this.state.error.reason}. {this.state.error.json}
+    </div>) }
+
     if(!this.state.container) {return(<h1>Loading...</h1>)}
 
     let ContainerStateLabel = null;

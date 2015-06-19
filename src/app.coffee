@@ -25,13 +25,84 @@ else
   app.use('/app/build', express.static('app/build'))
 
 
-
 OPENED_LOGS_STREAMS = {}
 
+
+stats = require('./stats')
+
+get_containers_for_branch = (project_name, branch_name, fn)->
+  console.log "GET '#{project_name}', '#{branch_name}'"
+  image = docker.getImage "#{config['namespace']}/#{project_name}:#{branch_name}"
+  image.inspect (err, inspect)->
+    if err
+      console.log('image getted', err)
+      return fn({error: err}, null)
+
+    branch_containers = config.get_project(project_name)['containers'].map (task)->
+      return "#{project_name}.#{branch_name}.#{task['name']}"
+
+    _containers = []
+    add_container = ->
+      container = branch_containers.shift()
+      if not container then return fn(inspect, _containers)
+
+      console.log('add container', container)
+      docker.getContainer(container).inspect (err, inspect)->
+        if err
+          _containers.push {error: err, task:container}
+        else
+          _containers.push {inspect: inspect, task: container}
+        add_container()
+    add_container()
+
+delete_branch = (project_name, branch_name, fn)->
+  report = [['report', project_name, branch_name]]
+  get_containers_for_branch project_name, branch_name, (image, containers)->
+    project_dir = "projects/#{project_name}/#{branch_name}"
+
+    remove_container = ->
+      container = containers.pop()
+      if not container then return remove_image()
+      if container['error']
+        report.push ['container', container['task'], 'ignored', container['error']]
+        return remove_container()
+
+      _container = docker.getContainer container['inspect']['Id']
+      _container.remove {force: true}, (err, data)->
+        if err
+          report.push ['container', container['task'], 'error', err]
+        else
+          report.push ['container', container['task'], 'removed', data]
+
+        remove_container()
+
+    remove_image = ->
+      _image = docker.getImage image['Id']
+      _image.remove {force: true}, (err, data)->
+        if err
+          report.push ['image', image['Id'], 'error', err]
+        else
+          report.push ['image', image['Id'], 'removed', data]
+
+        return remove_files()
+
+    remove_files = ->
+      if fs.existsSync(project_dir)
+        execSync("rm -rf #{project_dir}")
+        report.push ['files', 'removed']
+      else
+        report.push ['files', 'not found']
+
+      fn(report)
+
+    if image['error']
+      report.push ['error', 'Image not found']
+      return remove_files()
+
+    return remove_container()
+
+
 io.on 'connection', (socket)->
-  socket.emit('news', { hello: 'world' })
-  socket.on 'my other event', (data)->
-    console.log(data)
 
   socket.on 'projects', (fn)->
     if not fs.existsSync("projects")
@@ -52,7 +123,6 @@ io.on 'connection', (socket)->
         if branch_name == "defaults" or branch_name[0] == "."
           continue
         branch = {name: branch_name}
-        branch_inside = fs.readdirSync("./projects/#{project['name']}/#{branch_name}")
 
         branches.push branch
 
@@ -76,28 +146,32 @@ io.on 'connection', (socket)->
         continue_branch =-> add_to_branch(bi+1)
         branch = branches[bi]
         if not branch then return continue_project()
-        image = docker.getImage "#{config['namespace']}/#{project.name}:#{branch.name}"
-        image.inspect (err, inspect)->
-          console.log('image getted', err)
+
+        get_containers_for_branch project['name'], branch['name'], (inspect, containers)->
           branch['image'] = inspect
-          branch_containers = tasks[project.name].map (task)->
-            return "#{project.name}.#{branch.name}.#{task}"
-          branch['containers'] = []
-          add_container = ->
-            container = branch_containers.shift()
-            if not container then return continue_branch()
-            console.log('add container', container)
-            docker.getContainer(container).inspect (err, inspect)->
-              if err
-                branch['containers'].push {error: err, task:container}
-              else
-                branch['containers'].push {inspect: inspect, task: container}
-              add_container()
-          add_container()
+          branch['containers'] = containers
+          add_to_branch(bi+1)
 
       add_to_branch(0)
 
     add_docker_info_project(0)
+
+  socket.on 'get git heads', (project_name, fn)->
+    project = config.get_project project_name
+
+    cmd = "git ls-remote --heads #{project['git']}"
+    console.log cmd
+    child = exec cmd
+    stdout = stderr = ""
+
+    child.stdout.on 'data', (data)->
+      stdout += data
+
+    child.stderr.on 'data', (data)->
+      stderr += data
+
+    child.on 'close', (code)->
+      return fn(code, stdout, stderr)
 
   socket.on 'project', (project, fn)->
     project_config = config.get_project(project)
@@ -195,6 +269,11 @@ io.on 'connection', (socket)->
     image.remove (err, status)->
       console.log 'remove', err, status
       fn err, status
+
+  socket.on 'delete branch', (project_name, branch_name, fn)->
+    delete_branch project_name, branch_name, (report)->
+      console.log 'report', report
+      return fn report
 
   socket.on 'create branch', (data, fn)->
     steps_results = {}
@@ -305,45 +384,9 @@ io.on 'connection', (socket)->
 
     # FIXME! This must be in another method!!!
     if fs.existsSync(project_dir)
-      if fs.existsSync("#{project_dir}/docker_image_id")
-        docker_image_id = fs.readFileSync("#{project_dir}/docker_image_id").toString().trim()
-        image = docker.getImage(docker_image_id)
-
-        continue_creating_after_cleaning = =>
-          image.remove {force: yes}, (err, status)=>
-            console.log "IMAGE REMOVED!"
-            execSync("rm -rf #{project_dir}")
-            io.sockets.emit 'docker-out', PROJECT, BRANCH, '_build', {"stream": "* IMAGE REMOVED"}
-            continue_creating()
-
-        delete_container_if_equal = (containers, fn)=>
-          container = containers.pop()
-          if not container then return fn()
-
-          if container.Image.indexOf(image.name) == 0
-            docker.getContainer(container.Id).remove {force: yes}, (err)=>
-              console.log('REMOVE CONTAINER!', err, container);
-              io.sockets.emit 'docker-out', PROJECT, BRANCH, '_build', {"stream": "* CONTAINER REMOVED #{container.Names[0]}"}
-              return delete_container_if_equal(containers, fn)
-          else
-            console.log("Pass container")
-            return delete_container_if_equal(containers, fn)
-
-
-        docker.listContainers {all:yes}, (err, data)=>
-          if err then return console.log "Cant get containers", err, data
-          else console.log "containers", data
-
-          delete_container_if_equal data, continue_creating_after_cleaning
-
-
-      else
-        execSync("rm -rf #{project_dir}")
-        continue_creating()
-
+      return fn {"error": "project exist"}
     else
       continue_creating()
-
 
 
 server.listen 3000, ->

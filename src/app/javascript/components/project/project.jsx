@@ -2,6 +2,7 @@ import React from 'react';
 import {Link, RouteHandler} from 'react-router';
 import ClassNames from 'classnames';
 import ContainerDetail from '../docker/container_detail';
+import ContainerSettings from '../docker/container_settings';
 
 
 export default React.createClass({
@@ -24,14 +25,31 @@ export default React.createClass({
     let selected_container_name = `${this.state.project.name}.${this.state.branch}.${this.state.selected_task}`;
     console.log("YO", selected_container_name)
 
+    let body = null
+    if(this.state.selected_task != "_settings") {
+      body = <ContainerDetail name={selected_container_name} />
+    } else {
+      body = <ContainerSettings project={this.state.project} branch={this.state.branch} />
+    }
+
+    let settignsCls = ClassNames({
+      active: this.state.selected_task == "_settings"
+    })
+    let {project, branch} = this.context.router.getCurrentParams();
+
     return(<div>
 
       <ul className="nav nav-tabs">
+
+        <li role="presentation" key="_settings" className={settignsCls}>
+          <Link to="project-task" params={{project: project, branch: branch, task: '_settings'}}>
+            <span className="glyphicon glyphicon-cog"></span>
+          </Link>
+        </li>
+
         {this.state.project.containers.map((container) => {
-          let {project, branch} = this.context.router.getCurrentParams();
 
           let is_active = false;
-          console.log('thi!!@#!@#@!s', this.state.selected_task == container.name, this.state.selected_task, container.name)
           if(this.state.selected_task == container.name) { is_active = true; }
           let containerCls = ClassNames({ active: is_active });
 
@@ -43,10 +61,9 @@ export default React.createClass({
             </li>
           );
         })}
-
       </ul>
 
-      <ContainerDetail name={selected_container_name} />
+      {body}
 
     </div>)
   }

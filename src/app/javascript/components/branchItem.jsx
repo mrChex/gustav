@@ -31,7 +31,7 @@ export default React.createClass({
     return (
       <li className={li_classNames} onClick={this.selectBranch}>
         <b>{this.props.branch.name}</b>
-        {this.props.branch.containers.map((container)=> {
+        {this.props.branch.containers ? this.props.branch.containers.map((container)=> {
           let style = null;
 
           if(container['error']) { style="danger" }
@@ -47,8 +47,8 @@ export default React.createClass({
             "label-default": style == "default",
           });
 
-          return <span className={spanCls} style={{"margin-left":5}}>{container.task.split('.')[2]}</span>
-        })}
+          return <span className={spanCls} style={{"margin-left":5}} key={container.task}>{container.task.split('.')[2]}</span>
+        }) : <span className="label label-danger" style={{"margin-left":5}}>BROKEN BRANCH</span>}
       </li>
     )
 

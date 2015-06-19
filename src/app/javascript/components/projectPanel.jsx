@@ -15,7 +15,8 @@ export default React.createClass({
     let state = this.props.project;
     console.log(state)
     state['createBranch'] = false;
-    state['brunch'] = '';
+    state['branch'] = '';
+    state['gitbranches'] = [];
     state['branchCreatingWhile'] = false;
     state['last_branch_created_out'] = null;
     return state;
@@ -30,7 +31,24 @@ export default React.createClass({
   },
 
   createBranchOpenModal() {
-    this.setState({createBranch: true});
+
+    this.setState({createBranch: 'loading'});
+    socket.emit('get git heads', this.state.name, (code, stdout, stderr) => {
+      console.log('git branches', code, stdout, stderr);
+      if(code != 0) {alert('Error loading. Check console.'); return this.setState({createBranch: false});}
+
+      let gitbranches = []
+      for(let n of stdout.split("\n")) {
+        if(!n) {continue}
+        let splited = n.split("\t");
+        console.log('splitted', splited);
+        gitbranches.push(splited[1].split("/")[2]);
+      }
+
+      this.setState({createBranch: true, gitbranches: gitbranches});
+    });
+
+
   },
 
   branchCancel() {
@@ -50,6 +68,14 @@ export default React.createClass({
                 {"project": this.state.name,
                  "branch": this.state.branch},
                 (err, data) => {
+                  if(err) {
+                    console.log("Error while creating brunch", err);
+                    this.setState({createBranch: false});
+
+                    if(err['error'] == "project exist") {return alert("This project exist! You can delete or rebuild in branch settings.");}
+
+                    return alert("Unknown error! See console.log for detail");
+                  }
 
                   this.setState({createBranch: false,
                                  branchCreatingWhile: false});
@@ -67,7 +93,24 @@ export default React.createClass({
   render() {
 
         let modal = null;
-        if(this.state.createBranch) {
+
+        if(this.state.createBranch == "loading") { modal = (<div>
+          <div className="modal-backdrop fade in"></div>
+          <div className="modal show">
+            <div className="modal-dialog">
+
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h4 className="modal-title">Wait until cloning...</h4>
+                </div>
+                <div className="modal-body">
+                  Wait, loading branches list from git...
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>)} else if(this.state.createBranch) {
           let modal_body;
           if(this.state.branchCreatingWhile) {
             modal_body = (<div className="modal-content">
@@ -86,13 +129,16 @@ export default React.createClass({
                   <h4 className="modal-title">Create new branch image of project</h4>
                 </div>
                 <div className="modal-body">
-                  Enter name of exists branch.
-                  <br /><br />
-                  <input id="new-project-branch" className="form-control" type="text" value={this.state.branch} onChange={this.branchChanged} placeholder="Branch name on github" />
+                  <select id="new-project-branch" value={this.branch} className="form-control" onChange={this.branchChanged}>
+                    {this.state.gitbranches.map((b) => {
+                      return(<option key={b} value={b}>{b}</option>)
+                    })}
+                  </select>
+
                 </div>
                 <div className="modal-footer">
                   <button type="button" className="btn btn-danger" onClick={this.branchCancel}>Cancel</button>
-                  <button type="submit" className="btn btn-success"><span className="glyphicon glyphicon-fire"></span> Create brunch</button>
+                  <button type="submit" className="btn btn-success"><span className="glyphicon glyphicon-fire"></span> Create branch</button>
                 </div>
               </div>)
           }
