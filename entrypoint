@@ -2,6 +2,11 @@
 
 run () {
   echo " * Running service"
+  coffee ./app.coffee
+}
+
+run-dev () {
+  echo " * Running service dev"
   nodemon ./app.coffee
 }
 
@@ -11,6 +16,10 @@ case "$1" in
 
   run)
     run
+    ;;
+
+  run-dev)
+    run-dev
     ;;
 
   bash)

@@ -6,6 +6,7 @@ import { socket } from './socket';
 // Components
 import AppComponent from './components/app';
 import MainPage from './components/mainpage';
+import Monitoring from './components/monitoring/index';
 import DockerOut from './components/dockerOut';
 
 import DockerPage from './components/docker/index';
@@ -19,6 +20,8 @@ import Project from './components/project/index';
 let routes = (
   <Route name='root' path='/' handler={AppComponent}>
     <Route name='main-page' path='/' handler={MainPage}>
+
+      <Route name='monitoring' path='/' handler={Monitoring} />
 
       <Route name='docker-out' path='/docker-out/:project/:branch/:task' handler={DockerOut} />
 

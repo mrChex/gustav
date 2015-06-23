@@ -29,6 +29,7 @@ OPENED_LOGS_STREAMS = {}
 
 
 stats = require('./stats')
+stats.set_io io
 
 get_containers_for_branch = (project_name, branch_name, fn)->
   console.log "GET '#{project_name}', '#{branch_name}'"
@@ -155,6 +156,14 @@ io.on 'connection', (socket)->
       add_to_branch(0)
 
     add_docker_info_project(0)
+
+
+  socket.on 'stats is_started', (fn)-> return fn stats.is_started fn
+  socket.on 'stats start', (fn)-> stats.start fn
+  socket.on 'stats stop', -> stats.stop()
+  socket.on 'stats subscribe', -> socket.join 'stats'
+  socket.on 'stats unsubscribe', -> socket.leave 'stats'
+
 
   socket.on 'get git heads', (project_name, fn)->
     project = config.get_project project_name

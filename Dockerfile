@@ -59,7 +59,7 @@ RUN chmod +x /entrypoint
 
 VOLUME ["/home/gustav/projects"]
 ENTRYPOINT ["/entrypoint"]
-CMD ["run", "bash"]
+CMD ["run", "run-dev", "bash"]
 
 ONBUILD RUN mkdir /home/gustav/.ssh
 ONBUILD COPY keys/id_rsa /home/gustav/.ssh/id_rsa
