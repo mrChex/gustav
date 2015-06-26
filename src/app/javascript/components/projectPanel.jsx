@@ -46,7 +46,20 @@ export default React.createClass({
         gitbranches.push(splited[1].split("/")[2]);
       }
 
-      this.setState({createBranch: true, gitbranches: gitbranches});
+      let links = {}
+      this.state.containers.map((container) => {
+        if(!container['Links']) {return null}
+        container['Links'].map((Link) => {
+          links[Link] = 'master';
+        });
+      });
+
+      this.setState({createBranch: true,
+                     gitbranches: gitbranches,
+                     branch: gitbranches[0],
+                     Links: links,
+                     branchCreatingWhile: false});
+      console.log(this.state)
     });
 
 
