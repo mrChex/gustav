@@ -19,6 +19,13 @@ export default React.createClass({
       </tr>
 
       <tr>
+        <th>Links</th>
+        <td>{container['HostConfig']['Links'].map((link) => {
+          return <div>{link}</div>
+        })}</td>
+      </tr>
+
+      <tr>
         <th>Volumes</th>
         <td>{Object.keys(container.Volumes).map((volume)=>{return(
           <div key={volume}>

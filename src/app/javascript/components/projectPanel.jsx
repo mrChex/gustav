@@ -19,6 +19,7 @@ export default React.createClass({
     state['gitbranches'] = [];
     state['branchCreatingWhile'] = false;
     state['last_branch_created_out'] = null;
+    state['Links'] = {};
     return state;
   },
 
@@ -66,7 +67,8 @@ export default React.createClass({
 
     socket.emit('create branch',
                 {"project": this.state.name,
-                 "branch": this.state.branch},
+                 "branch": this.state.branch,
+                 "links": this.state.Links},
                 (err, data) => {
                   if(err) {
                     console.log("Error while creating brunch", err);
@@ -88,6 +90,11 @@ export default React.createClass({
                 });
 
     return false;
+  },
+
+  LinkChanged(e) {
+    this.state.Links[e.target.name] = e.target.value
+    console.log('link changed', this.state.Links, e.target.value, e.target.name);
   },
 
   render() {
@@ -134,6 +141,26 @@ export default React.createClass({
                       return(<option key={b} value={b}>{b}</option>)
                     })}
                   </select>
+
+                  {this.state.containers.map((container) => {
+                    if(!container['Links']) {return null}
+
+                    return <div>
+                      <h3>Links for {container.name}</h3>
+                      {container['Links'].map((Link) => {
+                        let link = Link.split(":")[0].split("@");
+                        return <div className="input-group" key={Link}>
+                          <span className="input-group-addon">{link[0]}.</span>
+                          <input type="text"
+                                 className="form-control"
+                                 value={this.state.Links[Link]}
+                                 name={Link}
+                                 onChange={this.LinkChanged} />
+                          <span className="input-group-addon">.{link[1]}</span>
+                        </div>
+                      })}
+                    </div>
+                  })}
 
                 </div>
                 <div className="modal-footer">

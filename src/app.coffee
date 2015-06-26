@@ -182,6 +182,8 @@ io.on 'connection', (socket)->
     child.on 'close', (code)->
       return fn(code, stdout, stderr)
 
+
+
   socket.on 'project', (project, fn)->
     project_config = config.get_project(project)
 
@@ -289,6 +291,8 @@ io.on 'connection', (socket)->
     project_dir = "projects/#{data['project']}/#{data['branch']}"
     PROJECT = data['project']
     BRANCH = data['branch']
+    LINKS = data['links']
+    console.log("LINKS", LINKS)
 
 
     create_containers = (docker_image_id)=>
@@ -303,8 +307,14 @@ io.on 'connection', (socket)->
 
         if container['Binds']
           __cwd = config.cwd + '/' + project_dir
-
           container['Binds'] = container['Binds'].map (bind)-> __cwd + '/' + bind
+
+        if container['Links']
+          container['Links'] = container['Links'].map (link) =>
+            if LINKS[link] then link_branch = LINKS[link]
+            else link_branch = "master"
+            return link.replace("@", ".#{link_branch}.")
+
 
         console.log ' * creating_container'
         docker.createContainer container, (err, _container)=>
@@ -393,7 +403,7 @@ io.on 'connection', (socket)->
 
     # FIXME! This must be in another method!!!
     if fs.existsSync(project_dir)
-      return fn {"error": "project exist"}
+      return fn {"error": "project exist", "project_dir": project_dir}
     else
       continue_creating()
 
