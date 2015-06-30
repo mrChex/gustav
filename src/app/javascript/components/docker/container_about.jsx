@@ -20,9 +20,9 @@ export default React.createClass({
 
       <tr>
         <th>Links</th>
-        <td>{container['HostConfig']['Links'].map((link) => {
+        <td>{container['HostConfig']['Links'] ? container['HostConfig']['Links'].map((link) => {
           return <div>{link}</div>
-        })}</td>
+        }) : <i>links not found</i>}</td>
       </tr>
 
       <tr>
