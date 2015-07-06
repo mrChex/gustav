@@ -26,6 +26,7 @@ export default React.createClass({
     if(keep_tab && this.state.tab) { tab = this.state.tab }
 
     return {"name": name,
+            "displayName": name,
             "tab": tab,
             "container": null,
             "error": null}
@@ -36,7 +37,8 @@ export default React.createClass({
       if(err) {
         this.setState({error: err})
       } else {
-        this.setState({container: container})
+        this.setState({container: container,
+                       displayName: container['Name']})
       }
     });
   },
@@ -100,7 +102,7 @@ export default React.createClass({
     return (<div>
       <h2>
         <button type="button" className="btn btn-link" onClick={this.refresh}><span className="glyphicon glyphicon-refresh"></span></button>
-        &nbsp;{this.state.name}
+        &nbsp;{this.state.displayName}
         &nbsp;{ContainerStateLabel}
       </h2>
 

@@ -56,7 +56,7 @@ get_containers_for_branch = (project_name, branch_name, fn)->
         add_container()
     add_container()
 
-delete_branch = (project_name, branch_name, fn)->
+delete_branch = (project_name, branch_name, fn, is_remove_files=yes)->
   report = [['report', project_name, branch_name]]
   get_containers_for_branch project_name, branch_name, (image, containers)->
     project_dir = "projects/#{project_name}/#{branch_name}"
@@ -85,7 +85,10 @@ delete_branch = (project_name, branch_name, fn)->
         else
           report.push ['image', image['Id'], 'removed', data]
 
-        return remove_files()
+        if is_remove_files
+          return remove_files()
+        else
+          return fn(report)
 
     remove_files = ->
       if fs.existsSync(project_dir)
@@ -98,9 +101,86 @@ delete_branch = (project_name, branch_name, fn)->
 
     if image['error']
       report.push ['error', 'Image not found']
-      return remove_files()
+      if is_remove_files
+        return remove_files()
+      else
+        return fn(report)
 
     return remove_container()
+
+
+create_containers = (docker_image_id, project_name, branch_name, LINKS)->
+  project_dir = "projects/#{project_name}/#{branch_name}"
+  project_config = config.get_project(project_name)
+
+  console.log ' * create containers', project_config
+  create_container_recursivly = (containers, fn)=>
+    container = containers.pop()
+    console.log 'CREATE CONTAINER RECURS', docker_image_id, project_name, branch_name, LINKS, containers, container
+    if not container
+      return fn()
+
+    container['Image'] = docker_image_id
+    container['name'] = "#{project_name}.#{branch_name}.#{container['name']}"
+
+    if container['Binds']
+      __cwd = config.cwd + '/' + project_dir
+      container['Binds'] = container['Binds'].map (bind)-> __cwd + '/' + bind
+
+    console.log 'to links'
+    if container['Links']
+      console.log 'links'
+      container['Links'] = container['Links'].map (link) =>
+        if LINKS[link] then link_branch = LINKS[link]
+        else link_branch = "master"
+        return link.replace("@", ".#{link_branch}.")
+
+    console.log ' * creating_container'
+    docker.createContainer container, (err, _container)=>
+      console.log "* SOME!", err, _container
+      if not err
+        io.sockets.emit 'docker-out', project_name, branch_name, '_build', {"stream": "* Created container #{container.name}"}
+      else
+        io.sockets.emit 'docker-out', project_name, branch_name, '_build', {"error": "* Error creating container #{container.name}. Msg: #{err['json']}"}
+
+      create_container_recursivly containers, fn
+
+  create_container_recursivly project_config['containers'].slice(), =>
+    io.sockets.emit 'docker-out', project_name, branch_name, '_build', {"stream-end": true}
+
+
+
+rebuild_branch = (project_name, branch_name, LINKS)->
+  project_dir = "projects/#{project_name}/#{branch_name}"
+
+  after_delete_fn = (report)->
+    for item in report
+      io.sockets.emit 'docker-out', project_name, branch_name, '_build', {"stream": "#{item}"}
+
+
+    # Next COPY PASTE!!! :( sadly truth
+
+
+    build project_name, branch_name, !config.build_use_cache, (out_parsed)->
+      if out_parsed['stream']
+        console.log('DOCKER', out_parsed['stream'].trim());
+      else
+        console.log('DOCKER', out_parsed);
+
+      io.sockets.emit 'docker-out', project_name, branch_name, '_build', out_parsed
+      fs.appendFileSync("#{project_dir}/docker-out/_build", out_parsed['stream'])
+
+      startPattern = 'Successfully built '
+      if out_parsed['stream'] and out_parsed['stream'].slice(0, startPattern.length) == startPattern
+        docker_image = out_parsed['stream'].split("#{startPattern}")[1].trim()
+
+        fs.writeFileSync("#{project_dir}/docker_image_id", docker_image)
+
+        create_containers(docker_image, project_name, branch_name, LINKS)
+
+
+
+  delete_branch(project_name, branch_name, after_delete_fn, no)
 
 
 io.on 'connection', (socket)->
@@ -286,6 +366,9 @@ io.on 'connection', (socket)->
       console.log 'report', report
       return fn report
 
+  socket.on 'rebuild branch', (project_name, branch_name, links, fn)->
+    rebuild_branch project_name, branch_name, links
+
   socket.on 'create branch', (data, fn)->
     steps_results = {}
     project_dir = "projects/#{data['project']}/#{data['branch']}"
@@ -319,7 +402,12 @@ io.on 'connection', (socket)->
         console.log ' * creating_container'
         docker.createContainer container, (err, _container)=>
           console.log "* SOME!", err, _container
-          io.sockets.emit 'docker-out', data['project'], data['branch'], '_build', {"stream": "* Created container #{container.name}"}
+          if not err
+            io.sockets.emit 'docker-out', PROJECT, BRANCH, '_build', {"stream": "* Created container #{container.name}"}
+          else
+            io.sockets.emit 'docker-out', PROJECT, BRANCH, '_build', {"error": "* Error creating container #{container.name}. Msg: #{err['json']}"}
+
+
           create_container_recursivly containers, fn
 
       create_container_recursivly project_config['containers'].slice(), =>

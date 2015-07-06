@@ -107,6 +107,7 @@ export default React.createClass({
 
   LinkChanged(e) {
     this.state.Links[e.target.name] = e.target.value
+
     console.log('link changed', this.state.Links, e.target.value, e.target.name);
   },
 
@@ -162,11 +163,11 @@ export default React.createClass({
                       <h3>Links for {container.name}</h3>
                       {container['Links'].map((Link) => {
                         let link = Link.split(":")[0].split("@");
-                        return <div className="input-group" key={Link}>
+                        return <div className="input-group">
                           <span className="input-group-addon">{link[0]}.</span>
                           <input type="text"
                                  className="form-control"
-                                 value={this.state.Links[Link]}
+
                                  name={Link}
                                  onChange={this.LinkChanged} />
                           <span className="input-group-addon">.{link[1]}</span>

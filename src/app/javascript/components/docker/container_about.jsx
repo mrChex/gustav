@@ -27,11 +27,11 @@ export default React.createClass({
 
       <tr>
         <th>Volumes</th>
-        <td>{Object.keys(container.Volumes).map((volume)=>{return(
+        <td>{container.Volumes ? Object.keys(container.Volumes).map((volume)=>{return(
           <div key={volume}>
             {container.Volumes[volume]} => {volume}
           </div>
-        )})}</td>
+        )}) : <i>volumes not found</i>}</td>
       </tr>
 
       <tr>

@@ -28,6 +28,7 @@ let routes = (
       <Route name='project'>
         <Route name='project-index' path='/project/:project/:branch' handler={Project} />
         <Route name='project-task' path='/project/:project/:branch/:task' handler={Project} />
+        <Route name='project-task-tab' path='/project/:project/:branch/:task/:tab' handler={Project} />
       </Route>
 
     </Route>

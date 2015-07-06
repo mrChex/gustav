@@ -15,7 +15,8 @@ export default React.createClass({
     return {
       project: this.props.project,
       selected_task: this.props.selected_task,
-      branch: this.props.branch
+      branch: this.props.branch,
+      detailTab: this.props.tab ? this.props.tab : 'about'
     }
   },
 
@@ -27,7 +28,7 @@ export default React.createClass({
 
     let body = null
     if(this.state.selected_task != "_settings") {
-      body = <ContainerDetail name={selected_container_name} />
+      body = <ContainerDetail name={selected_container_name} tab={this.state.detailTab} />
     } else {
       body = <ContainerSettings project={this.state.project} branch={this.state.branch} />
     }

@@ -2,6 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 import {socket} from '../../socket';
 import Actions from './container_actions';
+import {Link, RouteHandler} from 'react-router';
 
 
 export default React.createClass({
@@ -88,7 +89,7 @@ export default React.createClass({
     let Names = null;
     if(container.Names) {
       Names = container.Names.map((name)=>{
-        return <span key={name}>{name} </span>
+        return <div key={name}>{name}</div>
       });
     }
 
@@ -103,7 +104,7 @@ export default React.createClass({
                  restart={this.containerReStart}
                  remove={this.containerRemove} />
       </td>
-      <td>{Id}</td>
+      <td><Link to="docker-page-container-tab" params={{name: Id, tab:'about'}}>{Id}</Link></td>
       <td>{container.Image.slice(0,30)}</td>
       <td>{Names}</td>
       <td>{container.Status}</td>

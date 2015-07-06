@@ -41,7 +41,7 @@ RUN npm install -g babel babel-core babel-loader bootstrap-sass bootstrap-sass-l
 
 RUN npm install -g nodemon
 
-RUN useradd -ms /bin/bash gustav
+RUN mkdir /home/gustav
 
 RUN locale-gen "en_US.UTF-8"
 RUN locale-gen "ru_RU.UTF-8"
@@ -66,8 +66,3 @@ ONBUILD COPY keys/id_rsa /home/gustav/.ssh/id_rsa
 ONBUILD RUN ssh-keyscan -H github.com >> /home/gustav/.ssh/known_hosts
 
 ONBUILD ADD config /home/gustav/src/config
-
-ONBUILD RUN chown -R 1000:1000 /home/gustav
-
-ONBUILD USER 1000
-ONBUILD ENV HOME /home/gustav
