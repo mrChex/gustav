@@ -7,7 +7,8 @@ var VENDOR_LIBS = [
     'react-router',
     'jquery',
     'classnames',
-    'bootstrap-sass!./bootstrap.config.js'
+    'bootstrap-sass!./bootstrap.config.js',
+    'immutable'
 ];
 
 module.exports = {

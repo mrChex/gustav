@@ -52,24 +52,40 @@ let observer = {
 
 };
 
-socket.on('docker-out', (project, _branch, _task, data) => {
-  let history_key = `${project}.${_branch}.${_task}`;
-  console.log('docker-out', history_key);
-  if(!history[history_key]) { history[history_key] = []; }
+socket.on('docker-out-stacked', (stacked) => {
 
-  history[history_key].push(data);
-  if(history[history_key].length > config_console.history_max_lines_per_task) {
-    history[history_key].shift();
-  }
+  let callbacks = {};
 
-  if(!listenners[project] || listenners[project].length == 0) { return; }
+  for(let [project, _branch, _task, data] of stacked) {
 
-  for(let {branch, task, callback} of listenners[project]) {
-    if(branch == _branch && task == _task) {
-      callback(data);
+    let history_key = `${project}.${_branch}.${_task}`;
+    console.log('docker-out', history_key);
+    if(!history[history_key]) { history[history_key] = []; }
+
+    history[history_key].push(data);
+    if(history[history_key].length > config_console.history_max_lines_per_task) {
+      history[history_key].shift();
     }
+
+    if(!listenners[project] || listenners[project].length == 0) { return; }
+
+    for(let {branch, task, callback} of listenners[project]) {
+      if(branch == _branch && task == _task) {
+        if(!callbacks[_branch+_task]) {
+          callbacks[_branch+_task] = {"callback": callback,
+                                      "data": [data]}
+        } else {
+          callbacks[_branch+_task]['data'].push(data);
+        }
+      }
+    }
+
   }
 
+  for(let key in callbacks) {
+    let {callback, data} = callbacks[key];
+    callback(data);
+  }
 
 });
 

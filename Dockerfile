@@ -37,9 +37,11 @@ RUN npm install -g babel babel-core babel-loader bootstrap-sass bootstrap-sass-l
                   url-loader \
                   webpack \
                   webpack-dev-middleware \
-                  webpack-dev-server
+                  webpack-dev-server \
+                  nodemon \
+                  immutable
 
-RUN npm install -g nodemon
+RUN npm install -g immutable
 
 RUN mkdir /home/gustav
 
@@ -53,6 +55,7 @@ COPY ./src /home/gustav/src
 WORKDIR /home/gustav/src
 RUN ln -s /usr/lib/node_modules node_modules
 RUN npm run build
+
 
 ADD entrypoint /entrypoint
 RUN chmod +x /entrypoint

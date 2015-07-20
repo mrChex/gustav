@@ -3,6 +3,7 @@ import {Link, RouteHandler} from 'react-router';
 import {socket, observer} from '../socket';
 import { console as config_console } from '../config';
 import Console from './console';
+import {List, Map} from 'immutable';
 
 
 export default React.createClass({
@@ -17,10 +18,10 @@ export default React.createClass({
     let { project, branch, task } = this.context.router.getCurrentParams();
 
     let history = observer.get_history(project, branch, task);
-    let stdout = [];
+    let stdout = List();
     if(history !== false) {
       for(let history_item of history) {
-        stdout.push(history_item);
+        stdout = stdout.push(Map(history_item));
       }
     }
 
@@ -55,12 +56,16 @@ export default React.createClass({
     observer.unlisten(this.state.project, this.state.branch, this.state.task, this.observerSay)
   },
 
-  observerSay(data) {
-    this.state.stdout.push(data);
-    if(this.state.stdout.length > config_console.max_lines) {
-      this.state.stdout.shift();
+  observerSay(data_stacked) {
+    let stdout = this.state.stdout
+    for(let data in data_stacked){
+      if(stdout.size > config_console.max_lines) {
+        stdout = stdout.shift();
+      }
+      stdout = stdout.push(data);
     }
-    this.forceUpdate();
+
+    this.setState({"stdout": stdout});
   },
 
   render() {

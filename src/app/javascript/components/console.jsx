@@ -1,4 +1,5 @@
 import React from 'react';
+import {addons} from 'react/addons'
 import Scroll from './scroll';
 
 
@@ -14,7 +15,34 @@ let Time = React.createClass({
   }
 });
 
+let Line = React.createClass({
+
+  mixins: [addons.PureRenderMixin],
+
+  i: 0,
+
+  render() {
+    let line = this.props.line;
+
+    if(line.get('stream-end') == true) { return (<b key="END">process ended!</b>) }
+
+    let _line = null;
+    if(line.get('stream')) {
+      _line = line.get('stream')
+    } else if(line.get('error')) {
+      _line = <span style={{color:'red'}}>{line.get('error')}</span>
+    } else {
+      _line = <span style={{color:'yellow'}}>{line}</span>
+    }
+
+    return <div>{_line}</div>
+  }
+
+});
+
 export default React.createClass({
+
+  mixins: [addons.PureRenderMixin],
 
   getInitialState() {
 
@@ -43,19 +71,7 @@ export default React.createClass({
       <Scroll enable={this.state.enable_scroll}>
         <div className="consoleComponent">
           {this.props.stdout.map( (line) => {
-
-            if(line['stream-end'] == true) { return (<b key="END">process ended!</b>) }
-
-            let _line = null;
-            if(line['stream']) {
-              _line = line['stream']
-            } else if(line['error']) {
-              _line = <span style={{color:'red'}}>{line['error']}</span>
-            } else {
-              _line = <span style={{color:'yellow'}}>{line}</span>
-            }
-
-            return <div>{_line}</div>
+            return <Line line={line} />
           })}
 
         </div>

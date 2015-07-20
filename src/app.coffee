@@ -11,6 +11,7 @@ webpackMiddleware = require("webpack-dev-middleware")
 webpack = require 'webpack'
 
 docker = require('./docker').docker
+Docker_out = require('./docker').out
 config = require('./config/config')
 build = require('./build').build
 
@@ -30,6 +31,8 @@ OPENED_LOGS_STREAMS = {}
 
 stats = require('./stats')
 stats.set_io io
+
+require('./docker').init(io)
 
 get_containers_for_branch = (project_name, branch_name, fn)->
   console.log "GET '#{project_name}', '#{branch_name}'"
@@ -136,17 +139,18 @@ create_containers = (docker_image_id, project_name, branch_name, LINKS)->
         return link.replace("@", ".#{link_branch}.")
 
     console.log ' * creating_container'
+    console.log 'container', container
     docker.createContainer container, (err, _container)=>
       console.log "* SOME!", err, _container
       if not err
-        io.sockets.emit 'docker-out', project_name, branch_name, '_build', {"stream": "* Created container #{container.name}"}
+        Docker_out project_name, branch_name, '_build', {"stream": "* Created container #{container.name}"}
       else
-        io.sockets.emit 'docker-out', project_name, branch_name, '_build', {"error": "* Error creating container #{container.name}. Msg: #{err['json']}"}
+        Docker_out project_name, branch_name, '_build', {"error": "* Error creating container #{container.name}. Msg: #{err['json']}"}
 
       create_container_recursivly containers, fn
 
   create_container_recursivly project_config['containers'].slice(), =>
-    io.sockets.emit 'docker-out', project_name, branch_name, '_build', {"stream-end": true}
+    Docker_out project_name, branch_name, '_build', {"stream-end": true}
 
 
 
@@ -155,7 +159,7 @@ rebuild_branch = (project_name, branch_name, LINKS)->
 
   after_delete_fn = (report)->
     for item in report
-      io.sockets.emit 'docker-out', project_name, branch_name, '_build', {"stream": "#{item}"}
+      Docker_out project_name, branch_name, '_build', {"stream": "#{item}"}
 
 
     # Next COPY PASTE!!! :( sadly truth
@@ -167,7 +171,7 @@ rebuild_branch = (project_name, branch_name, LINKS)->
       else
         console.log('DOCKER', out_parsed);
 
-      io.sockets.emit 'docker-out', project_name, branch_name, '_build', out_parsed
+      Docker_out project_name, branch_name, '_build', out_parsed
       fs.appendFileSync("#{project_dir}/docker-out/_build", out_parsed['stream'])
 
       startPattern = 'Successfully built '
@@ -403,19 +407,19 @@ io.on 'connection', (socket)->
         docker.createContainer container, (err, _container)=>
           console.log "* SOME!", err, _container
           if not err
-            io.sockets.emit 'docker-out', PROJECT, BRANCH, '_build', {"stream": "* Created container #{container.name}"}
+            Docker_out PROJECT, BRANCH, '_build', {"stream": "* Created container #{container.name}"}
           else
-            io.sockets.emit 'docker-out', PROJECT, BRANCH, '_build', {"error": "* Error creating container #{container.name}. Msg: #{err['json']}"}
+            Docker_out PROJECT, BRANCH, '_build', {"error": "* Error creating container #{container.name}. Msg: #{err['json']}"}
 
 
           create_container_recursivly containers, fn
 
       create_container_recursivly project_config['containers'].slice(), =>
-        io.sockets.emit 'docker-out', PROJECT, BRANCH, '_build', {"stream-end": true}
+        Docker_out PROJECT, BRANCH, '_build', {"stream-end": true}
 
     continue_creating = =>
       # creating branch folder
-      io.sockets.emit 'docker-out', PROJECT, BRANCH, '_build', {"stream": "* Creating folders & clone"}
+      Docker_out PROJECT, BRANCH, '_build', {"stream": "* Creating folders & clone"}
       if not fs.existsSync("projects/#{data['project']}")
         fs.mkdirSync("projects/#{data['project']}")
       fs.mkdirSync(project_dir)
@@ -443,12 +447,12 @@ io.on 'connection', (socket)->
 
       child.stdout.on 'data', (data)->
         console.log 'stdout: ', data
-        io.sockets.emit 'docker-out', PROJECT, BRANCH, '_build', {"stream": "GIT: #{data}"}
+        Docker_out PROJECT, BRANCH, '_build', {"stream": "GIT: #{data}"}
         stdout += data
 
       child.stderr.on 'data', (data)->
         console.log 'stderr: ', data
-        io.sockets.emit 'docker-out', PROJECT, BRANCH, '_build', {"stream": "GETERR: #{data}"}
+        Docker_out PROJECT, BRANCH, '_build', {"stream": "GETERR: #{data}"}
         stderr += data
 
       child.on 'close', (code)->
@@ -478,7 +482,7 @@ io.on 'connection', (socket)->
           else
             console.log('DOCKER', out_parsed);
 
-          io.sockets.emit 'docker-out', data['project'], data['branch'], '_build', out_parsed
+          Docker_out data['project'], data['branch'], '_build', out_parsed
           fs.appendFileSync("#{project_dir}/docker-out/_build", out_parsed['stream'])
 
           startPattern = 'Successfully built '
