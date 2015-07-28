@@ -55,7 +55,7 @@ let observer = {
 socket.on('docker-out-stacked', (stacked) => {
 
   let callbacks = {};
-
+  console.log('stacked', stacked);
   for(let [project, _branch, _task, data] of stacked) {
 
     let history_key = `${project}.${_branch}.${_task}`;
@@ -84,6 +84,7 @@ socket.on('docker-out-stacked', (stacked) => {
 
   for(let key in callbacks) {
     let {callback, data} = callbacks[key];
+    console.log(callback, data)
     callback(data);
   }
 

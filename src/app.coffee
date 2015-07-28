@@ -310,10 +310,10 @@ io.on 'connection', (socket)->
       if err then return console.log 'ERROR', err
 
       data.on 'data', (l)=>
-        io.sockets.emit('docker-out', name_n[0], name_n[1], name_n[2], l.toString('utf8'))
+        Docker_out name_n[0], name_n[1], name_n[2], l.toString('utf8')
 
       data.on 'end', =>
-        io.sockets.emit('docker-out', name_n[0], name_n[1], name_n[2], {"stream-end": true})
+        Docker_out name_n[0], name_n[1], name_n[2], {"stream-end": true}
         OPENED_LOGS_STREAMS[name] = false
 
 

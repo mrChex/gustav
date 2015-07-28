@@ -21,7 +21,7 @@ export default React.createClass({
     let stdout = List();
     if(history !== false) {
       for(let history_item of history) {
-        stdout = stdout.push(Map(history_item));
+        stdout = stdout.push(history_item);
       }
     }
 
@@ -57,8 +57,9 @@ export default React.createClass({
   },
 
   observerSay(data_stacked) {
-    let stdout = this.state.stdout
-    for(let data in data_stacked){
+    console.log('observerSay', data_stacked);
+    let stdout = this.state.stdout;
+    for(let data in data_stacked) {
       if(stdout.size > config_console.max_lines) {
         stdout = stdout.shift();
       }

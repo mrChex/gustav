@@ -23,14 +23,14 @@ let Line = React.createClass({
 
   render() {
     let line = this.props.line;
-
-    if(line.get('stream-end') == true) { return (<b key="END">process ended!</b>) }
+    console.log('line', line);
+    if(line['stream-end'] == true) { return (<b key="END">process ended!</b>) }
 
     let _line = null;
-    if(line.get('stream')) {
-      _line = line.get('stream')
-    } else if(line.get('error')) {
-      _line = <span style={{color:'red'}}>{line.get('error')}</span>
+    if(line['stream']) {
+      _line = line['stream']
+    } else if(line['error']) {
+      _line = <span style={{color:'red'}}>{line['error']}</span>
     } else {
       _line = <span style={{color:'yellow'}}>{line}</span>
     }
